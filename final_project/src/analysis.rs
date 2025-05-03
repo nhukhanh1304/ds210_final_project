@@ -1,4 +1,5 @@
 use std::collections::{HashSet, VecDeque};
+use std::collections::HashMap;
 use crate::network::Graph;
 
 /// Runs BFS from the given start node and returns the shortest distance to each reachable node.
@@ -43,5 +44,31 @@ pub fn average_shortest_path_length(graph: &Graph, start: usize) -> f64 {
         0.0
     } else {
         total as f64 / count as f64
+    }
+}
+
+/// Computes the degree distribution of a graph.
+/// Returns a map from degree value → number of nodes with that degree.
+pub fn compute_degree_distribution(graph: &Graph) -> HashMap<usize, usize> {
+    let mut distribution = HashMap::new();
+
+    for (&node, neighbors) in &graph.adj_list {
+        let degree = neighbors.len();
+        *distribution.entry(degree).or_insert(0) += 1;
+    }
+
+    distribution
+}
+
+/// Prints the degree distribution to the console.
+pub fn print_degree_distribution(graph: &Graph) {
+    let distribution = compute_degree_distribution(graph);
+    println!("\n📊 Degree Distribution (degree: count):");
+
+    let mut degrees: Vec<_> = distribution.iter().collect();
+    degrees.sort_by_key(|&(degree, _)| *degree); // sort by degree
+
+    for (degree, count) in degrees {
+        println!("{:>3}: {}", degree, count);
     }
 }

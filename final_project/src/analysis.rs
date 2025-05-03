@@ -1,6 +1,6 @@
-use std::collections::{HashSet, VecDeque};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use crate::network::Graph;
+
 
 /// Runs BFS from the given start node and returns the shortest distance to each reachable node.
 pub fn bfs_shortest_paths(graph: &Graph, start: usize) -> Vec<usize> {
@@ -80,6 +80,76 @@ pub fn print_degree_distribution(graph: &Graph) {
         println!("{:>3}: {:>4} {}", degree, count, bar);
     }
 }
+
+
+
+/// Computes the Jaccard similarity between two nodes in the graph.
+fn jaccard_similarity(graph: &Graph, a: usize, b: usize) -> f64 {
+    let neighbors_a = match graph.adj_list.get(&a) {
+        Some(neighbors) => neighbors,
+        None => return 0.0,
+    };
+
+    let neighbors_b = match graph.adj_list.get(&b) {
+        Some(neighbors) => neighbors,
+        None => return 0.0,
+    };
+
+    let set_a: HashSet<_> = neighbors_a.iter().copied().collect();
+    let set_b: HashSet<_> = neighbors_b.iter().copied().collect();
+
+    let intersection: usize = set_a.intersection(&set_b).count();
+    let union: usize = set_a.union(&set_b).count();
+
+    if union == 0 {
+        0.0
+    } else {
+        intersection as f64 / union as f64
+    }
+}
+
+/// Finds and prints the top 5 most similar nodes to a given node using Jaccard similarity.
+pub fn find_top_jaccard_similarities(graph: &Graph, target: usize, top_n: usize) {
+    println!("\nTop {top_n} nodes most similar to node {target} (by Jaccard similarity):");
+
+    let mut similarities: Vec<(usize, f64)> = graph.adj_list
+        .keys()
+        .filter(|&&node| node != target)
+        .map(|&node| (node, jaccard_similarity(graph, target, node)))
+        .collect();
+
+    // Sort by similarity score, descending
+    similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+    for (node, score) in similarities.iter().take(top_n) {
+        println!("Node {:>4}: Similarity {:.3}", node, score);
+    }
+}
+
+/// Finds and prints the pair of nodes in the entire graph with the highest Jaccard similarity.
+pub fn find_most_similar_pair(graph: &Graph) {
+    let nodes: Vec<_> = graph.adj_list.keys().copied().collect();
+    let mut best_pair = (0, 0);
+    let mut best_score = 0.0;
+
+    for i in 0..nodes.len() {
+        for j in (i + 1)..nodes.len() {
+            let a = nodes[i];
+            let b = nodes[j];
+            let score = jaccard_similarity(graph, a, b);
+            if score > best_score {
+                best_score = score;
+                best_pair = (a, b);
+            }
+        }
+    }
+
+    println!(
+        "\n💡 Most similar node pair (by Jaccard): {} & {} with similarity {:.3}",
+        best_pair.0, best_pair.1, best_score
+    );
+}
+
 
 #[cfg(test)]
 mod tests {

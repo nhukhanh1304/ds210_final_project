@@ -1,4 +1,7 @@
 use analysis::print_degree_distribution;
+use analysis::find_top_jaccard_similarities;
+use analysis::find_most_similar_pair;
+
 
 mod data_loader;
 mod network;
@@ -17,7 +20,11 @@ fn main() {
 
     let avg_path_length = average_shortest_path_length(&graph, 0);
     println!("Average shortest path length from node 0: {:.2}", avg_path_length);
-    
+
     print_degree_distribution(&graph);
+    
+    find_top_jaccard_similarities(&graph, 0, 5);
+
+    find_most_similar_pair(&graph);
 
 }

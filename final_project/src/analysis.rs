@@ -61,14 +61,23 @@ pub fn compute_degree_distribution(graph: &Graph) -> HashMap<usize, usize> {
 }
 
 /// Prints the degree distribution to the console.
+/// Prints a CLI histogram of the degree distribution.
 pub fn print_degree_distribution(graph: &Graph) {
     let distribution = compute_degree_distribution(graph);
-    println!("\n📊 Degree Distribution (degree: count):");
+    println!("\nDegree Distribution (degree: count, histogram):");
 
+    // Sort degrees by value
     let mut degrees: Vec<_> = distribution.iter().collect();
-    degrees.sort_by_key(|&(degree, _)| *degree); // sort by degree
+    degrees.sort_by_key(|&(degree, _)| *degree);
+
+    // Optional: normalize bar width
+    let max_count = distribution.values().copied().max().unwrap_or(1);
 
     for (degree, count) in degrees {
-        println!("{:>3}: {}", degree, count);
+        // Scale histogram bar to max 50 characters
+        let bar_len = (50 * *count) / max_count;
+        let bar = "*".repeat(bar_len.max(1));  // always show something
+        println!("{:>3}: {:>4} {}", degree, count, bar);
     }
 }
+

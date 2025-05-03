@@ -81,3 +81,22 @@ pub fn print_degree_distribution(graph: &Graph) {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::network::Graph;
+
+    #[test]
+    fn test_compute_degree_distribution() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(1, 3);
+        graph.add_edge(2, 3);
+
+        let distribution = compute_degree_distribution(&graph);
+
+        // Expecting all 3 nodes to have degree 2
+        assert_eq!(distribution.get(&2), Some(&3));
+        assert!(!distribution.contains_key(&1)); // No node with degree 1
+    }
+}

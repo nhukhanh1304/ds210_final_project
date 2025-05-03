@@ -29,3 +29,20 @@ impl Graph {
         self.adj_list.len()
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add_edge_and_degree() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(1, 3);
+
+        assert_eq!(graph.degree(1), 2); // Node 1 should have 2 neighbors
+        assert_eq!(graph.degree(2), 1); // Node 2 connected to 1
+        assert_eq!(graph.degree(3), 1); // Node 3 connected to 1
+    }
+}

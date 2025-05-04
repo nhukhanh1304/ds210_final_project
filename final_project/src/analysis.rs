@@ -164,8 +164,60 @@ mod tests {
 
         let degree_count = compute_degree_distribution(&graph);
 
-        // expecting all 3 nodes to have degree 2
-        assert_eq!(degree_count.get(&2), Some(&3));
-        assert!(!degree_count.contains_key(&1));  // no node with degree 1
+        assert_eq!(degree_count.get(&2), Some(&3));  // all nodes have degree 2
+        assert!(!degree_count.contains_key(&1));     // no node has degree 1
+    }
+
+    #[test]
+    fn test_empty_graph_degree_distribution() {
+        let graph = Graph::new();
+        let degree_count = compute_degree_distribution(&graph);
+        assert!(degree_count.is_empty());
+    }
+
+    #[test]
+    fn test_graph_with_isolated_nodes() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.adj_list.insert(3, vec![]);  // isolated node
+        let degree_count = compute_degree_distribution(&graph);
+
+        assert_eq!(degree_count.get(&0), Some(&1));  // node 3
+        assert_eq!(degree_count.get(&1), Some(&2));  // nodes 1 and 2
+    }
+
+    #[test]
+    fn test_duplicate_edges() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(1, 2);  // duplicate
+
+        assert_eq!(graph.degree(1), 2);
+        assert_eq!(graph.degree(2), 2);
+    }
+
+    #[test]
+    fn test_bfs_shortest_paths_triangle() {
+        let mut graph = Graph::new();
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 0);
+
+        let distances = bfs_shortest_paths(&graph, 0);
+
+        assert_eq!(distances[0], 0);
+        assert_eq!(distances[1], 1);
+        assert_eq!(distances[2], 1);
+    }
+
+    #[test]
+    fn test_average_shortest_path_length_triangle() {
+        let mut graph = Graph::new();
+        graph.add_edge(0, 1);
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 0);
+
+        let avg = average_shortest_path_length(&graph, 0);
+        assert!((avg - 1.0).abs() < 1e-6);  // (1+1)/2 = 1.0
     }
 }

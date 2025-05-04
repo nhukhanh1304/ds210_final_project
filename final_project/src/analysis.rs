@@ -1,24 +1,27 @@
+// analysis.rs: This module is for network analysis functions including: degree distribution, average path length, and jaccard similarity for a graph
+
 use std::collections::{HashMap, HashSet, VecDeque};
 use crate::network::Graph;
 
-
-/// Runs BFS from the given start node and returns the shortest distance to each reachable node.
+/// runs a BFS from the given start node and returns the shortest distance to each reachable node.
+/// 'graph': the input graph as a reference to the graph struct; 'start': the starting node index
+/// returns a vector of shortest distances from `start` to every other node (usize::MAX if unreachable)
 pub fn bfs_shortest_paths(graph: &Graph, start: usize) -> Vec<usize> {
-    let mut visited = HashSet::new();
-    let mut distance = vec![usize::MAX; graph.num_nodes()];
-    let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();  // track visited nodes
+    let mut distance = vec![usize::MAX; graph.num_nodes()];  // initialize all distances to 'infinity'
+    let mut queue = VecDeque::new();  // queue for bfs traversal
 
-    visited.insert(start);
-    distance[start] = 0;
-    queue.push_back(start);
+    visited.insert(start);  // mark the start node as visited
+    distance[start] = 0;    // distance to itself is 0
+    queue.push_back(start); // start bfs traversal from start node
 
     while let Some(current) = queue.pop_front() {
         if let Some(neighbors) = graph.adj_list.get(&current) {
             for &neighbor in neighbors {
                 if !visited.contains(&neighbor) {
-                    visited.insert(neighbor);
-                    distance[neighbor] = distance[current] + 1;
-                    queue.push_back(neighbor);
+                    visited.insert(neighbor);  // visit neighbor
+                    distance[neighbor] = distance[current] + 1;  // set neighbor's distance
+                    queue.push_back(neighbor);  
                 }
             }
         }
@@ -27,16 +30,17 @@ pub fn bfs_shortest_paths(graph: &Graph, start: usize) -> Vec<usize> {
     distance
 }
 
-/// Computes the average shortest path length from a given node.
+/// computes the average shortest path length from a given starting node using bfs
+/// returns average distance to all reachable nodes as 'f64'
 pub fn average_shortest_path_length(graph: &Graph, start: usize) -> f64 {
-    let distances = bfs_shortest_paths(graph, start);
+    let shortest_path_lengths = bfs_shortest_paths(graph, start);
     let mut total = 0;
     let mut count = 0;
 
-    for &d in &distances {
-        if d != usize::MAX && d != 0 {
-            total += d;
-            count += 1;
+    for &dist in &shortest_path_lengths {
+        if dist != usize::MAX && dist != 0 {
+            total += dist;  // acumulate total distance
+            count += 1;  // count reachable nodes (excluding self)
         }
     }
 
@@ -47,43 +51,40 @@ pub fn average_shortest_path_length(graph: &Graph, start: usize) -> f64 {
     }
 }
 
-/// Computes the degree distribution of a graph.
-/// Returns a map from degree value → number of nodes with that degree.
+/// calculates the degree distribution of a graph.
+/// returns a hashmap mapping each degree value to the num of nodes with that degree
 pub fn compute_degree_distribution(graph: &Graph) -> HashMap<usize, usize> {
-    let mut distribution = HashMap::new();
+    let mut degree_count = HashMap::new();
 
-    for (&node, neighbors) in &graph.adj_list {
+    for neighbors in graph.adj_list.values() {
         let degree = neighbors.len();
-        *distribution.entry(degree).or_insert(0) += 1;
+        *degree_count.entry(degree).or_insert(0) += 1;
     }
 
-    distribution
+    degree_count
 }
 
-/// Prints the degree distribution to the console.
-/// Prints a CLI histogram of the degree distribution.
+/// prints a histogram of the degree distribution to the terminal using simple bars built from '*'
 pub fn print_degree_distribution(graph: &Graph) {
-    let distribution = compute_degree_distribution(graph);
-    println!("\nDegree Distribution (degree: count, histogram):");
+    let degree_count = compute_degree_distribution(graph);
+    println!("\ndegree distribution (degree: count, histogram):");
 
-    // Sort degrees by value
-    let mut degrees: Vec<_> = distribution.iter().collect();
+    // sort degrees by value
+    let mut degrees: Vec<_> = degree_count.iter().collect();
     degrees.sort_by_key(|&(degree, _)| *degree);
 
-    // Optional: normalize bar width
-    let max_count = distribution.values().copied().max().unwrap_or(1);
+    // normalize bar width based on the highest frequency
+    let max_count = degree_count.values().copied().max().unwrap_or(1);
 
     for (degree, count) in degrees {
-        // Scale histogram bar to max 50 characters
+        // scale histogram bar to max 50 char
         let bar_len = (50 * *count) / max_count;
-        let bar = "*".repeat(bar_len.max(1));  // always show something
-        println!("{:>3}: {:>4} {}", degree, count, bar);
+        println!("{:>3}: {:>4} {}", degree, count, "*".repeat(bar_len.max(1)));
     }
 }
 
-
-
-/// Computes the Jaccard similarity between two nodes in the graph.
+/// computes the Jaccard similarity between two nodes based on their neighbirs
+/// returns the similarity score as an 'f64'
 fn jaccard_similarity(graph: &Graph, a: usize, b: usize) -> f64 {
     let neighbors_a = match graph.adj_list.get(&a) {
         Some(neighbors) => neighbors,
@@ -95,7 +96,7 @@ fn jaccard_similarity(graph: &Graph, a: usize, b: usize) -> f64 {
         None => return 0.0,
     };
 
-    let set_a: HashSet<_> = neighbors_a.iter().copied().collect();
+    let set_a: HashSet<_> = neighbors_a.iter().copied().collect();  // convert neighbor list to set
     let set_b: HashSet<_> = neighbors_b.iter().copied().collect();
 
     let intersection: usize = set_a.intersection(&set_b).count();
@@ -108,9 +109,9 @@ fn jaccard_similarity(graph: &Graph, a: usize, b: usize) -> f64 {
     }
 }
 
-/// Finds and prints the top 5 most similar nodes to a given node using Jaccard similarity.
+/// finds and prints the top 5 most similar nodes to a given node using jaccard similarity
 pub fn find_top_jaccard_similarities(graph: &Graph, target: usize, top_n: usize) {
-    println!("\nTop {top_n} nodes most similar to node {target} (by Jaccard similarity):");
+    println!("\ntop {top_n} nodes most similar to node {target} (by jaccard similarity):");
 
     let mut similarities: Vec<(usize, f64)> = graph.adj_list
         .keys()
@@ -118,15 +119,14 @@ pub fn find_top_jaccard_similarities(graph: &Graph, target: usize, top_n: usize)
         .map(|&node| (node, jaccard_similarity(graph, target, node)))
         .collect();
 
-    // Sort by similarity score, descending
-    similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());  // sort descending
 
     for (node, score) in similarities.iter().take(top_n) {
-        println!("Node {:>4}: Similarity {:.3}", node, score);
+        println!("node {:>4}: similarity {:.3}", node, score);
     }
 }
 
-/// Finds and prints the pair of nodes in the entire graph with the highest Jaccard similarity.
+/// finds and prints the pair of nodes in the entire graph with the highest jaccard similarity by iterating through all node pairs
 pub fn find_most_similar_pair(graph: &Graph) {
     let nodes: Vec<_> = graph.adj_list.keys().copied().collect();
     let mut best_pair = (0, 0);
@@ -145,11 +145,10 @@ pub fn find_most_similar_pair(graph: &Graph) {
     }
 
     println!(
-        "\n💡 Most similar node pair (by Jaccard): {} & {} with similarity {:.3}",
+        "\nmost similar node pair (by jaccard): {} & {} with similarity {:.3}",
         best_pair.0, best_pair.1, best_score
     );
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -163,10 +162,10 @@ mod tests {
         graph.add_edge(1, 3);
         graph.add_edge(2, 3);
 
-        let distribution = compute_degree_distribution(&graph);
+        let degree_count = compute_degree_distribution(&graph);
 
-        // Expecting all 3 nodes to have degree 2
-        assert_eq!(distribution.get(&2), Some(&3));
-        assert!(!distribution.contains_key(&1)); // No node with degree 1
+        // expecting all 3 nodes to have degree 2
+        assert_eq!(degree_count.get(&2), Some(&3));
+        assert!(!degree_count.contains_key(&1));  // no node with degree 1
     }
 }

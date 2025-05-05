@@ -14,14 +14,15 @@ fn main() {
     // load the graph from the edge list file
     let graph = load_graph_from_file("facebook_combined.txt");
 
-    println!("number of nodes: {}", graph.num_nodes());
-    println!("degree of node 0: {}", graph.degree(0));
+    println!("Number of users (nodes): {}", graph.num_nodes());
+    println!("User 0 has {} direct friends", graph.degree(0));
 
     // compute & print average shortest path length from node 0
     let avg_path_length = average_shortest_path_length(&graph, 0);
-    println!("average shortest path length from node 0: {:.2}", avg_path_length);
+    println!("On average, User 0 is {:.2} connections away from other users in the graph", avg_path_length);
 
     // prints degree distribution as ascii histogram made from '*'
+    println!("\nFriendship degree distribution - number of users with X friends");
     print_degree_distribution(&graph);
     
     // finds and prints top 5 nodes most similar to node 0 using jacard similarity

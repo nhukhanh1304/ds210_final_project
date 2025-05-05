@@ -67,7 +67,6 @@ pub fn compute_degree_distribution(graph: &Graph) -> HashMap<usize, usize> {
 /// prints a histogram of the degree distribution to the terminal using simple bars built from '*'
 pub fn print_degree_distribution(graph: &Graph) {
     let degree_count = compute_degree_distribution(graph);
-    println!("\ndegree distribution (degree: count, histogram):");
 
     // sort degrees by value
     let mut degrees: Vec<_> = degree_count.iter().collect();
@@ -79,7 +78,8 @@ pub fn print_degree_distribution(graph: &Graph) {
     for (degree, count) in degrees {
         // scale histogram bar to max 50 char
         let bar_len = (50 * *count) / max_count;
-        println!("{:>3}: {:>4} {}", degree, count, "*".repeat(bar_len.max(1)));
+        println!("{:>3} friend(s): {}", degree, "*".repeat(bar_len.max(1)));
+
     }
 }
 
@@ -111,7 +111,7 @@ fn jaccard_similarity(graph: &Graph, a: usize, b: usize) -> f64 {
 
 /// finds and prints the top 5 most similar nodes to a given node using jaccard similarity
 pub fn find_top_jaccard_similarities(graph: &Graph, target: usize, top_n: usize) {
-    println!("\ntop {top_n} nodes most similar to node {target} (by jaccard similarity):");
+    println!("\nTop {top_n} users most similar to User 0 (based on Jaccard similarity):");
 
     let mut similarities: Vec<(usize, f64)> = graph.adj_list
         .keys()
@@ -122,7 +122,7 @@ pub fn find_top_jaccard_similarities(graph: &Graph, target: usize, top_n: usize)
     similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());  // sort descending
 
     for (node, score) in similarities.iter().take(top_n) {
-        println!("node {:>4}: similarity {:.3}", node, score);
+        println!("User {:>4} has similarity {:.3}", node, score);
     }
 }
 
@@ -145,7 +145,7 @@ pub fn find_most_similar_pair(graph: &Graph) {
     }
 
     println!(
-        "\nmost similar node pair (by jaccard): {} & {} with similarity {:.3}",
+        "The most similar pair of users in the entire network (with most overlap in friends) is User {} & User {} with similarity {:.3}",
         best_pair.0, best_pair.1, best_score
     );
 }
